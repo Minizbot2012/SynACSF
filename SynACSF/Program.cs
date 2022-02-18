@@ -32,7 +32,8 @@ namespace SynACSF
             return state.LinkCache.Resolve<IPerkGetter>(form);
         }
 
-        public static void ReadPerk(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IFormLinkNullableGetter<IPerkGetter> Perk, SkillTree tree) {
+        public static void ReadPerk(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IFormLinkNullableGetter<IPerkGetter> Perk, SkillTree tree)
+        {
             SkillTreePerk perk = new();
             var PerkForm = Perk.Resolve<IPerkGetter>(state.LinkCache);
             perk.Perk = $"__formData|{PerkForm.FormKey.ModKey.FileName}|0x{PerkForm.FormKey.IDString()}";
@@ -153,7 +154,8 @@ namespace SynACSF
             }
             tree.Perks.Add(perk);
             CompletedLinks.Add(NodeID);
-            if(!PerkForm.NextPerk.IsNull) {
+            if (!PerkForm.NextPerk.IsNull)
+            {
                 ReadPerk(state, PerkForm.NextPerk, tree);
             }
             if (cv.Entries.ContainsKey($"{Node}.Links"))
@@ -216,6 +218,7 @@ namespace SynACSF
             {
                 tree.Level = TypedMethod.GLOB;
                 tree.LevelGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("LevelFile") ?? ""}|{cv.Entries?.GetValueOrDefault("LevelId") ?? ""}";
+                tree.StartingLevel = state.LinkCache.Resolve<IGlobalFloatGetter>(new FormKey(ModKey.FromFileName(cv.Entries?.GetValueOrDefault("LevelFile") ?? ""), uint.Parse(cv.Entries?.GetValueOrDefault("LevelId") ?? "")))?.Data.ToString()??"0";
             }
             ReadNode0(state, cv, tree, CompletedLinks);
             return tree;

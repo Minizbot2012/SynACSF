@@ -17,6 +17,7 @@ namespace SynASTF.Structures
         public TypedMethod PerkPoints;
         public string PerkPointsGLOB;
         public TypedMethod Legendary;
+        public string StartingLevel;
         public string LegendaryGLOB;
         public List<SkillTreePerk> Perks;
     }
