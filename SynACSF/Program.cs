@@ -218,7 +218,7 @@ namespace SynACSF
             {
                 tree.Level = TypedMethod.GLOB;
                 tree.LevelGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("LevelFile") ?? ""}|{cv.Entries?.GetValueOrDefault("LevelId") ?? ""}";
-                tree.StartingLevel = state.LinkCache.Resolve<IGlobalFloatGetter>(new FormKey(ModKey.FromFileName(cv.Entries?.GetValueOrDefault("LevelFile") ?? ""), uint.Parse(cv.Entries?.GetValueOrDefault("LevelId")?.Substring(2) ?? "", System.Globalization.NumberStyles.HexNumber)))?.Data.ToString()??"0";
+                tree.StartingLevel = state.LinkCache.Resolve<IGlobalShortGetter>(new FormKey(ModKey.FromFileName(cv.Entries?.GetValueOrDefault("LevelFile") ?? ""), uint.Parse(cv.Entries?.GetValueOrDefault("LevelId")?.Substring(2) ?? "", System.Globalization.NumberStyles.HexNumber)))?.Data.ToString()??"0";
             }
             ReadNode0(state, cv, tree, CompletedLinks);
             return tree;
