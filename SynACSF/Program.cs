@@ -51,11 +51,11 @@ namespace SynACSF
                     Conditions = PerkForm.Conditions.Select(x => x.DeepCopy()).Concat(new ExtendedList<Condition>() {
                     new ConditionFloat() {
                         CompareOperator = CompareOperator.GreaterThanOrEqualTo,
+                        ComparisonValue = 1.0F,
                         Data = new FunctionConditionData() {
                             Function = Condition.Function.GetGlobalValue,
                             RunOnType = Condition.RunOnType.Subject,
                             ParameterOneRecord = tree.PP_GV.AsLink(),
-                            ParameterOneNumber = 1,
                         }
                     }
                 }).ToExtendedList(),
