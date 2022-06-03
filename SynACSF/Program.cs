@@ -13,7 +13,7 @@ using Noggog;
 
 using Newtonsoft.Json;
 
-using SynASTF.Structures;
+using SynACSF.Structures;
 
 namespace SynACSF
 {
@@ -32,73 +32,9 @@ namespace SynACSF
             return state.LinkCache.Resolve<IPerkGetter>(form);
         }
 
-        public static void ReadPerk(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IFormLinkNullableGetter<IPerkGetter> Perk, SkillTree tree)
+        public static void GenPerk(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IPerkGetter PerkForm, SkillTree tree)
         {
             SkillTreePerk perk = new();
-            var PerkForm = Perk.Resolve<IPerkGetter>(state.LinkCache);
-            perk.Perk = $"__formData|{PerkForm.FormKey.ModKey.FileName}|0x{PerkForm.FormKey.IDString()}";
-            perk.Conditions = new();
-            perk.Name = PerkForm.Name?.String ?? "";
-            var msg = state.PatchMod.Messages.AddNew();
-            msg.Description = PerkForm.Description?.String ?? ""; ;
-            msg.Flags = Message.Flag.MessageBox;
-            msg.INAM = new MemorySlice<byte>(new byte[4]);
-            msg.MenuButtons.Add(new MessageButton()
-            {
-                Text = "Yes"
-            });
-            msg.MenuButtons.Add(new MessageButton()
-            {
-                Text = "No"
-            });
-            msg.Name = $"Take This Perk {PerkForm.Name?.String}?";
-            msg.EditorID = PerkForm.EditorID + "_TAKE";
-            perk.Description = $"__formData|{msg.FormKey.ModKey.FileName}|0x{msg.FormKey.IDString()}";
-            foreach (var cond in PerkForm.Conditions)
-            {
-                if (cond.GetType().ToString() == "Mutagen.Bethesda.Skyrim.Internals.ConditionFloatBinaryOverlay")
-                {
-                    IConditionFloatGetter conditionFloat = (IConditionFloatGetter)cond.DeepCopy();
-                    IFunctionConditionDataGetter conditionData = (IFunctionConditionDataGetter)conditionFloat.Data;
-                    var condition = new SkillCondition();
-                    condition.Comparison = cond.CompareOperator.ToString();
-                    condition.Function = conditionData.Function.ToString();
-                    if (!conditionData.ParameterOneRecord.IsNull)
-                    {
-                        condition.Arg1 = $"__formData|{conditionData.ParameterOneRecord.FormKey.ModKey.FileName}|0x{conditionData.ParameterOneRecord.FormKey.IDString()}";
-                        if (condition.Function == "GetGlobalValue" && cond.CompareOperator == CompareOperator.GreaterThanOrEqualTo)
-                        {
-                            msg.Description += $"\nREQUIRES {conditionFloat.ComparisonValue} {conditionData.ParameterOneRecord.Resolve(state.LinkCache).EditorID}";
-                        }
-                    }
-                    else
-                    {
-                        //Console.WriteLine(conditionData.ParameterOneNumber);
-                        //Console.WriteLine(conditionData.ParameterOneString);
-                    }
-                    if (!conditionData.ParameterTwoRecord.IsNull)
-                    {
-                        condition.Arg2 = $"__formData|{conditionData.ParameterTwoRecord.FormKey.ModKey.FileName}|0x{conditionData.ParameterTwoRecord.FormKey.IDString()}";
-                    }
-                    else
-                    {
-                        //Console.WriteLine(conditionData.ParameterTwoNumber);
-                        //Console.WriteLine(conditionData.ParameterTwoString);
-                    }
-                    condition.Value = $"{conditionFloat.ComparisonValue}";
-                    perk.Conditions.Add(condition);
-                }
-            }
-            tree.Perks.Add(perk);
-        }
-
-        public static void ReadNodes(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SynASTF.NetScriptFramework.ConfigFile cv, SkillTree tree, string NodeID, List<string> CompletedLinks)
-        {
-            string Node = $"Node{NodeID}";
-            SkillTreePerk perk = new();
-            uint formID = uint.Parse(cv.Entries[$"{Node}.PerkId"].Substring(2), System.Globalization.NumberStyles.HexNumber);
-            FormKey key = new FormKey(cv.Entries[$"{Node}.PerkFile"], formID);
-            var PerkForm = GetPerkFromFile(state, key);
             perk.Perk = $"__formData|{PerkForm.FormKey.ModKey.FileName}|0x{PerkForm.FormKey.IDString()}";
             perk.Conditions = new();
             perk.Name = PerkForm.Name?.String ?? "";
@@ -107,7 +43,8 @@ namespace SynACSF
             msg.INAM = new MemorySlice<byte>(new byte[4]);
             msg.MenuButtons.Add(new MessageButton()
             {
-                Text = "Yes"
+                Text = "Yes",
+                Conditions = PerkForm.Conditions.Select(x => x.DeepCopy()).ToExtendedList()
             });
             msg.MenuButtons.Add(new MessageButton()
             {
@@ -129,10 +66,6 @@ namespace SynACSF
                     if (!conditionData.ParameterOneRecord.IsNull)
                     {
                         condition.Arg1 = $"__formData|{conditionData.ParameterOneRecord.FormKey.ModKey.FileName}|0x{conditionData.ParameterOneRecord.FormKey.IDString()}";
-                        if (condition.Function == "GetGlobalValue" && cond.CompareOperator == CompareOperator.GreaterThanOrEqualTo)
-                        {
-                            msg.Description += $"\nREQUIRES {conditionFloat.ComparisonValue} {conditionData.ParameterOneRecord.Resolve(state.LinkCache).EditorID}";
-                        }
                     }
                     else
                     {
@@ -153,11 +86,19 @@ namespace SynACSF
                 }
             }
             tree.Perks.Add(perk);
-            CompletedLinks.Add(NodeID);
             if (!PerkForm.NextPerk.IsNull)
             {
-                ReadPerk(state, PerkForm.NextPerk, tree);
+                GenPerk(state, PerkForm.NextPerk.Resolve<IPerkGetter>(state.LinkCache), tree);
             }
+        }
+        public static void ReadNodes(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SynACSF.NetScriptFramework.ConfigFile cv, SkillTree tree, string NodeID, List<string> CompletedLinks)
+        {
+            string Node = $"Node{NodeID}";
+            uint formID = uint.Parse(cv.Entries[$"{Node}.PerkId"].Substring(2), System.Globalization.NumberStyles.HexNumber);
+            FormKey key = new FormKey(cv.Entries[$"{Node}.PerkFile"], formID);
+            IPerkGetter PerkForm = GetPerkFromFile(state, key);
+            GenPerk(state, PerkForm, tree);
+            CompletedLinks.Add(NodeID);
             if (cv.Entries.ContainsKey($"{Node}.Links"))
             {
                 if (cv.Entries.GetValueOrDefault($"{Node}.Links") != "")
@@ -173,7 +114,7 @@ namespace SynACSF
             }
         }
 
-        public static void ReadNode0(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SynASTF.NetScriptFramework.ConfigFile cv, SkillTree tree, List<string> CompletedLinks)
+        public static void ReadNode0(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SynACSF.NetScriptFramework.ConfigFile cv, SkillTree tree, List<string> CompletedLinks)
         {
             string Node = $"Node0";
             if (cv.Entries.GetValueOrDefault($"{Node}.Links") != "")
@@ -187,7 +128,7 @@ namespace SynACSF
 
         public static SkillTree ReadConfigFile(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, string Path)
         {
-            var cv = new SynASTF.NetScriptFramework.ConfigFile(Path);
+            var cv = new SynACSF.NetScriptFramework.ConfigFile(Path);
             cv.Load();
             SkillTree tree = new();
             tree.Perks = new();
@@ -207,7 +148,7 @@ namespace SynACSF
             if (cv.Entries?.GetValueOrDefault("PerkPointsFile") != "")
             {
                 tree.PerkPoints = TypedMethod.GLOB;
-                tree.PerkPointsGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("PerkPointsFile") ?? "Skyrim.esm"}|{cv.Entries?.GetValueOrDefault("PerkPointsId") ?? "646"}";
+                tree.PerkPointsGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("PerkPointsFile") ?? "Skyrim.esm"}|{cv.Entries?.GetValueOrDefault("PerkPointsId") ?? ""}";
             }
             else
             {
@@ -219,7 +160,7 @@ namespace SynACSF
                 tree.Level = TypedMethod.GLOB;
                 tree.LevelGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("LevelFile") ?? ""}|{cv.Entries?.GetValueOrDefault("LevelId") ?? ""}";
                 var gval = state.LinkCache.Resolve<IGlobalGetter>(new FormKey(ModKey.FromFileName(cv.Entries?.GetValueOrDefault("LevelFile") ?? ""), uint.Parse(cv.Entries?.GetValueOrDefault("LevelId")?.Substring(2) ?? "", System.Globalization.NumberStyles.HexNumber)));
-                tree.StartingLevel =  ((IGlobalShortGetter)gval)?.Data.ToString()??"0";
+                tree.StartingLevel = ((IGlobalShortGetter)gval)?.Data.ToString() ?? "0";
             }
             ReadNode0(state, cv, tree, CompletedLinks);
             return tree;
