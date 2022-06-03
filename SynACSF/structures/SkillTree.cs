@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
-namespace SynASTF.Structures
+
+namespace SynACSF.Structures
 {
     [JsonConverter(typeof(StringEnumConverter))]
     public enum TypedMethod

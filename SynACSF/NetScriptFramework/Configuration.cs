@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace SynASTF.NetScriptFramework
+namespace SynACSF.NetScriptFramework
 {
     public class ConfigFile
     {
