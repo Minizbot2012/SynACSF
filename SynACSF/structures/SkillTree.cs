@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
+using Mutagen.Bethesda.Skyrim;
 
 namespace SynACSF.Structures
 {
@@ -16,6 +17,8 @@ namespace SynACSF.Structures
         public TypedMethod Level;
         public string LevelGLOB;
         public TypedMethod PerkPoints;
+        [JsonIgnore]
+        public IGlobalGetter PP_GV;
         public string PerkPointsGLOB;
         public TypedMethod Legendary;
         public string StartingLevel;
