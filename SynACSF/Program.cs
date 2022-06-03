@@ -14,6 +14,7 @@ using Noggog;
 using Newtonsoft.Json;
 
 using SynACSF.Structures;
+using System.Linq.Expressions;
 
 namespace SynACSF
 {
@@ -44,7 +45,17 @@ namespace SynACSF
             msg.MenuButtons.Add(new MessageButton()
             {
                 Text = "Yes",
-                Conditions = PerkForm.Conditions.Select(x => x.DeepCopy()).ToExtendedList()
+                Conditions = PerkForm.Conditions.Select(x=>x.DeepCopy()).Concat(new ExtendedList<Condition>() {
+                    new ConditionFloat() {
+                        CompareOperator = CompareOperator.GreaterThanOrEqualTo,
+                        Data = new FunctionConditionData() {
+                            Function = Condition.Function.GetGlobalValue,
+                            RunOnType = Condition.RunOnType.Subject,
+                            ParameterOneRecord = tree.PP_GV.AsLink(),
+                            ParameterOneNumber = 1
+                        }
+                    }
+                }).ToExtendedList(),
             });
             msg.MenuButtons.Add(new MessageButton()
             {
@@ -148,6 +159,7 @@ namespace SynACSF
             if (cv.Entries?.GetValueOrDefault("PerkPointsFile") != "")
             {
                 tree.PerkPoints = TypedMethod.GLOB;
+                tree.PP_GV = state.LinkCache.Resolve<IGlobalGetter>(new FormKey(ModKey.FromFileName(cv.Entries?.GetValueOrDefault("PerkPointsFile") ?? ""), uint.Parse(cv.Entries?.GetValueOrDefault("PerkPointsId")?.Substring(2) ?? "", System.Globalization.NumberStyles.HexNumber)));
                 tree.PerkPointsGLOB = $"__formData|{cv.Entries?.GetValueOrDefault("PerkPointsFile") ?? "Skyrim.esm"}|{cv.Entries?.GetValueOrDefault("PerkPointsId") ?? ""}";
             }
             else
