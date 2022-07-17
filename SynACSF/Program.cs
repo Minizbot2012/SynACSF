@@ -55,7 +55,7 @@ namespace SynACSF
                         Data = new FunctionConditionData() {
                             Function = Condition.Function.GetGlobalValue,
                             RunOnType = Condition.RunOnType.Subject,
-                            ParameterOneRecord = tree.PP_GV.AsLink(),
+                            ParameterOneRecord = tree.PP_GV.ToLink(),
                         }
                     }
                 }).ToExtendedList(),
