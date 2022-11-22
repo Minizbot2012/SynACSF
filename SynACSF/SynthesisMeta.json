@@ -1,6 +1,6 @@
 {
   "Nickname": "SynAlternateCustomSkills",
-  "Visibility": "Include",
+  "Visibility": "Visible",
   "OneLineDescription": "Synthesis Patcher for NetFramework based Custom Skill Trees",
   "LongDescription": "Generates the necesscary data for a NetFramework skill tree to work in Alternate Custom Skill Framework",
   "PreferredAutoVersioning": "Default",
