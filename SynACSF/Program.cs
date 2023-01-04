@@ -141,12 +141,16 @@ namespace SynACSF
         public static void ReadNode0(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SynACSF.NetScriptFramework.ConfigFile cv, SkillTree tree, List<string> CompletedLinks)
         {
             string Node = $"Node0";
-            if (cv.Entries.GetValueOrDefault($"{Node}.Links") != "")
+            if (!cv.Entries.GetValueOrDefault($"{Node}.Links").IsNullOrWhitespace())
             {
                 foreach (var node in cv.Entries[$"{Node}.Links"].Replace(",", "").Split(" "))
                 {
                     ReadNodes(state, cv, tree, node, CompletedLinks);
                 }
+            }
+            else
+            {
+                throw new Exception("Non-Custom Skill Tree Framework Config");
             }
         }
 
@@ -197,9 +201,16 @@ namespace SynACSF
             foreach (var file in files)
             {
                 var filePath = Path.Combine(state.DataFolderPath, "NetScriptFramework", "Plugins", file);
-                Console.WriteLine(filePath);
-                SkillTree tree = ReadConfigFile(state, filePath);
-                File.WriteAllText(Path.Combine(state.DataFolderPath, "ACSF", $"{tree.Name}.json"), JsonConvert.SerializeObject(tree));
+                try
+                {
+                    Console.WriteLine(filePath);
+                    SkillTree tree = ReadConfigFile(state, filePath);
+                    File.WriteAllText(Path.Combine(state.DataFolderPath, "ACSF", $"{tree.Name}.json"), JsonConvert.SerializeObject(tree));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Found a Non-Skill Tree Framework config, ignoring: " + filePath);
+                }
             }
         }
     }
