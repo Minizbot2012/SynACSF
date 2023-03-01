@@ -11,11 +11,8 @@ using Mutagen.Bethesda.Synthesis;
 
 using Noggog;
 
-using Newtonsoft.Json;
 
 using SynACSF.Structures;
-using System.Linq.Expressions;
-using Mutagen.Bethesda.FormKeys.SkyrimSE;
 
 namespace SynACSF
 {
@@ -52,10 +49,9 @@ namespace SynACSF
                     new ConditionFloat() {
                         CompareOperator = CompareOperator.GreaterThanOrEqualTo,
                         ComparisonValue = 1.0F,
-                        Data = new FunctionConditionData() {
-                            Function = Condition.Function.GetGlobalValue,
+                        Data = new GetGlobalValueConditionData() {
                             RunOnType = Condition.RunOnType.Subject,
-                            ParameterOneRecord = tree.PP_GV.ToLink(),
+                            FirstParameter = (IFormLinkOrAlias<IGlobalGetter>) tree.PP_GV.ToLink(),
                         }
                     }
                 }).ToExtendedList(),
@@ -80,33 +76,30 @@ namespace SynACSF
             perk.Description = $"__formData|{msg.FormKey.ModKey.FileName}|0x{msg.FormKey.IDString()}";
             foreach (var cond in PerkForm.Conditions)
             {
-                if (cond.GetType().ToString() == "Mutagen.Bethesda.Skyrim.Internals.ConditionFloatBinaryOverlay")
+                if (cond.GetType().ToString() == typeof(IConditionFloatGetter).ToString())
                 {
+                    Console.WriteLine(cond.GetType().ToString());
                     IConditionFloatGetter conditionFloat = (IConditionFloatGetter)cond.DeepCopy();
-                    IFunctionConditionDataGetter conditionData = (IFunctionConditionDataGetter)conditionFloat.Data;
                     var condition = new SkillCondition();
                     condition.Comparison = cond.CompareOperator.ToString();
-                    condition.Function = conditionData.Function.ToString();
-                    if (!conditionData.ParameterOneRecord.IsNull)
+                    conditionFloat.Data.GetType();
+                    Console.WriteLine(conditionFloat.Data.GetType().ToString());
+                    if (conditionFloat.GetType().ToString() == typeof(GetGlobalValueConditionData).GetType().ToString())
                     {
-                        condition.Arg1 = $"__formData|{conditionData.ParameterOneRecord.FormKey.ModKey.FileName}|0x{conditionData.ParameterOneRecord.FormKey.IDString()}";
+                        var conditionData = (GetGlobalValueConditionData)conditionFloat.Data;
+                        condition.Function = conditionData.Function.ToString();
+                        if (!conditionData.FirstParameter.IsNull)
+                        {
+                            condition.Arg1 = $"__formData|{conditionData.FirstParameter.FormKey.ModKey.FileName}|0x{conditionData.FirstParameter.FormKey.IDString()}";
+                        }
+                        else
+                        {
+                            //Console.WriteLine(conditionData.ParameterOneNumber);
+                            //Console.WriteLine(conditionData.ParameterOneString);
+                        }
+                        condition.Value = $"{conditionFloat.ComparisonValue}";
+                        perk.Conditions.Add(condition);
                     }
-                    else
-                    {
-                        //Console.WriteLine(conditionData.ParameterOneNumber);
-                        //Console.WriteLine(conditionData.ParameterOneString);
-                    }
-                    if (!conditionData.ParameterTwoRecord.IsNull)
-                    {
-                        condition.Arg2 = $"__formData|{conditionData.ParameterTwoRecord.FormKey.ModKey.FileName}|0x{conditionData.ParameterTwoRecord.FormKey.IDString()}";
-                    }
-                    else
-                    {
-                        //Console.WriteLine(conditionData.ParameterTwoNumber);
-                        //Console.WriteLine(conditionData.ParameterTwoString);
-                    }
-                    condition.Value = $"{conditionFloat.ComparisonValue}";
-                    perk.Conditions.Add(condition);
                 }
             }
             tree.Perks.Add(perk);
@@ -207,7 +200,7 @@ namespace SynACSF
                     SkillTree tree = ReadConfigFile(state, filePath);
                     File.WriteAllText(Path.Combine(state.DataFolderPath, "ACSF", $"{tree.Name}.json"), JsonConvert.SerializeObject(tree));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Console.WriteLine("Found a Non-Skill Tree Framework config, ignoring: " + filePath);
                 }
