@@ -200,6 +200,7 @@ namespace SynACSF
             if (files.Count == 0)
             {
                 Console.WriteLine($"No skill trees installed skipping patch");
+                Console.WriteLine($"To use this patcher you MUST install a skill tree");
                 return;
             }
             foreach (var file in files)
