@@ -10,7 +10,7 @@ using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
 
 using Noggog;
-
+using Newtonsoft.Json;
 
 using SynACSF.Structures;
 
@@ -190,7 +190,15 @@ namespace SynACSF
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
-            var files = Directory.GetFiles(Path.Combine(state.DataFolderPath, "NetScriptFramework", "Plugins")).Where(x => x.EndsWith(".config.txt", true, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+            if(!Directory.Exists(Path.Combine(state.DataFolderPath, "NetScriptFramework", "Plugins"))) {
+                Console.WriteLine($"Folder for CSF trees does not exist, this is caused by having no skill trees installed");
+                return;
+            }
+            var files = Directory.GetFiles(Path.Combine(state.DataFolderPath, "NetScriptFramework", "Plugins")).Where(x => x.EndsWith(".config.txt", true, System.Globalization.CultureInfo.InvariantCulture) && x.StartsWith("CustomSkill.", true, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+            if(files.Count == 0) {
+                Console.WriteLine($"No skill trees installed skipping patch");
+                return;
+            }
             foreach (var file in files)
             {
                 var filePath = Path.Combine(state.DataFolderPath, "NetScriptFramework", "Plugins", file);
