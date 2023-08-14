@@ -46,15 +46,14 @@ namespace SynACSF
                 {
                     Text = "Yes",
                     Conditions = PerkForm.Conditions.Select(x => x.DeepCopy()).Concat(new ExtendedList<Condition>() {
-                    new ConditionFloat() {
-                        CompareOperator = CompareOperator.GreaterThanOrEqualTo,
-                        ComparisonValue = 1.0F,
-                        Data = new GetGlobalValueConditionData() {
-                            RunOnType = Condition.RunOnType.Subject,
-                            FirstParameter = (IFormLinkOrAlias<IGlobalGetter>) tree.PP_GV.ToLink(),
+                        new ConditionFloat() {
+                            CompareOperator = CompareOperator.GreaterThanOrEqualTo,
+                            ComparisonValue = 1.0F,
+                            Data = new GetGlobalValueConditionData() {
+                                Reference = tree.PP_GV.ToLink(),
+                            },
                         }
-                    }
-                }).ToExtendedList(),
+                    }).ToExtendedList(),
                 });
             }
             else
@@ -87,16 +86,8 @@ namespace SynACSF
                     if (conditionFloat.GetType().ToString() == typeof(GetGlobalValueConditionData).GetType().ToString())
                     {
                         var conditionData = (GetGlobalValueConditionData)conditionFloat.Data;
-                        condition.Function = conditionData.Function.ToString();
-                        if (!conditionData.FirstParameter.IsNull)
-                        {
-                            condition.Arg1 = $"__formData|{conditionData.FirstParameter.FormKey.ModKey.FileName}|0x{conditionData.FirstParameter.FormKey.IDString()}";
-                        }
-                        else
-                        {
-                            //Console.WriteLine(conditionData.ParameterOneNumber);
-                            //Console.WriteLine(conditionData.ParameterOneString);
-                        }
+                        condition.Function = conditionFloat.CompareOperator.ToString();
+                            condition.Arg1 = $"__formData|{conditionData.Global.Link.FormKey.ModKey.FileName}|0x{conditionData.Global.Link.FormKey.IDString()}";
                         condition.Value = $"{conditionFloat.ComparisonValue}";
                         perk.Conditions.Add(condition);
                     }
